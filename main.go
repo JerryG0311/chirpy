@@ -11,14 +11,18 @@ type apiConfig struct {
 }
 
 func main() {
-	apiCfg := apiConfig{}
-	fsHandler := http.FileServer(http.Dir("."))
 
+	apiCfg := apiConfig{}
 	mux := http.NewServeMux()
+
+	//Keeping the fileserver at /app/
+	fsHandler := http.FileServer(http.Dir("."))
 	mux.Handle("/app/", apiCfg.middlewareMetricsInc(http.StripPrefix("/app", fsHandler)))
-	mux.HandleFunc("GET /healthz", handlerReadiness)
-	mux.HandleFunc("GET /metrics", apiCfg.handlerMetrics)
-	mux.HandleFunc("POST /reset", apiCfg.handlerReset)
+
+	// api endpoints we are serving the /api path from
+	mux.HandleFunc("GET /api/healthz", handlerReadiness)
+	mux.HandleFunc("GET /api/metrics", apiCfg.handlerMetrics)
+	mux.HandleFunc("POST /api/reset", apiCfg.handlerReset)
 
 	server := &http.Server{
 		Addr:    ":8080",
