@@ -1,0 +1,28 @@
+### Test the health check (GET)
+GET http://localhost:8080/api/healthz
+
+###
+
+### Test the admin metrics (GET)
+GET http://localhost:8080/admin/metrics
+
+###
+
+### Reset the metrics (POST)
+POST http://localhost:8080/admin/reset
+
+### Test a valid Chirp
+POST http://localhost:8080/api/validate_chirp
+Content-Type: application/json
+
+{
+  "body": "This is a perfect chirp."
+}
+
+### Test a too-long Chirp
+POST http://localhost:8080/api/validate_chirp
+Content-Type: application/json
+
+{
+  "body": "This is a very long chirp that definitely exceeds the one hundred and forty character limit that we have strictly imposed on our users to keep things concise."
+}
