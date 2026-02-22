@@ -51,6 +51,7 @@ func main() {
 	mux.HandleFunc("POST /admin/reset", apiCfg.handlerReset)
 	mux.HandleFunc("POST /api/users", apiCfg.handlerCreateUser)
 	mux.HandleFunc("POST /api/chirps", apiCfg.handlerChirpsCreate)
+	mux.HandleFunc("GET /api/chirps", apiCfg.handlerChirpsGet)
 
 	server := &http.Server{
 		Addr:    ":8080",
@@ -192,6 +193,34 @@ func (cfg *apiConfig) handlerChirpsCreate(w http.ResponseWriter, r *http.Request
 		UserID:    chirp.UserID,
 	})
 }
+
+func (cfg *apiConfig) handlerChirpsGet(w http.ResponseWriter, r *http.Request) {
+	dbChirps, err := cfg.db.GetChirps(r.Context())
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Couldn't retrieve chirps")
+		return
+	}
+	type Chirp struct {
+		ID        uuid.UUID `json:"id"`
+		CreatedAt time.Time `json:"created_at"`
+		UpdatedAt time.Time `json:"updated_at"`
+		Body      string    `json:"body"`
+		UserID    uuid.UUID `json:"user_id"`
+	}
+
+	chirps := []Chirp{}
+	for _, dbdbChirp := range dbChirps {
+		chirps = append(chirps, Chirp{
+			ID:        dbdbChirp.ID,
+			CreatedAt: dbdbChirp.CreatedAt,
+			UpdatedAt: dbdbChirp.UpdatedAt,
+			Body:      dbdbChirp.Body,
+			UserID:    dbdbChirp.UserID,
+		})
+	}
+	respondWithJson(w, http.StatusOK, chirps)
+}
+
 func respondWithError(w http.ResponseWriter, code int, msg string) {
 	if code > 499 {
 		log.Printf("Responding with 5XXX error: %s", msg)
