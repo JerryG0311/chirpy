@@ -22,6 +22,7 @@ type apiConfig struct {
 	fileserverHits atomic.Int32
 	db             *database.Queries
 	platform       string
+	jwtSecret      string
 }
 
 type User struct {
@@ -32,7 +33,6 @@ type User struct {
 }
 
 func main() {
-
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Error loading .env file")
@@ -47,6 +47,7 @@ func main() {
 		db:       dbQueries,
 		platform: os.Getenv("PLATFORM"),
 	}
+	apiCfg.jwtSecret = os.Getenv("JWT_SECRET")
 	mux := http.NewServeMux()
 
 	//Keeping the fileserver at /app/
@@ -308,6 +309,7 @@ func (cfg *apiConfig) handlerLogin(w http.ResponseWriter, r *http.Request) {
 
 	type response struct {
 		User
+		Token string `json:"token"`
 	}
 
 	decoder := json.NewDecoder(r.Body)
@@ -328,6 +330,13 @@ func (cfg *apiConfig) handlerLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	expirationTime := time.Hour
+	token, err := auth.MakeJWT(user.ID, cfg.jwtSecret, expirationTime)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Couldn't create JWT")
+		return
+	}
+
 	respondWithJson(w, http.StatusOK, response{
 		User: User{
 			ID:        user.ID,
@@ -335,5 +344,6 @@ func (cfg *apiConfig) handlerLogin(w http.ResponseWriter, r *http.Request) {
 			UpdatedAt: user.UpdatedAt,
 			Email:     user.Email,
 		},
+		Token: token,
 	})
 }
