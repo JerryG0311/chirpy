@@ -1,37 +1,52 @@
 ### Test the health check (GET)
 GET http://localhost:8080/api/healthz
 
-###
-
 ### Test the admin metrics (GET)
 GET http://localhost:8080/admin/metrics
-
-###
 
 ### Reset the metrics (POST)
 POST http://localhost:8080/admin/reset
 
-### Test a valid Chirp
-POST http://localhost:8080/api/validate_chirp
+### 1. CREATE A USER (Use this to get your first UUID)
+POST http://localhost:8080/api/users
 Content-Type: application/json
 
 {
-  "body": "This is a perfect chirp."
+  "email": "testuser@example.com",
+  "password": "password123"
 }
 
-### Test a too-long Chirp
-POST http://localhost:8080/api/validate_chirp
+### 2. LOGIN (Another way to see your UUID and get a JWT)
+POST http://localhost:8080/api/login
 Content-Type: application/json
 
 {
-  "body": "This is a very long chirp that definitely exceeds the one hundred and forty character limit that we have strictly imposed on our users to keep things concise."
+  "email": "testuser@example.com",
+  "password": "password123"
 }
 
-
-### Test profanity filter
-POST http://localhost:8080/api/validate_chirp
+### 3. TEST POLKA WEBHOOK (Upgrade User)
+# NOTE: Added 'ApiKey ' prefix and a fake UUID. 
+# REPLACE the UUID below with the "id" you got from the Create User test above!
+POST http://localhost:8080/api/polka/webhooks
+Authorization: ApiKey f27d66bca09c470a9693026827050a4d
 Content-Type: application/json
 
 {
-  "body": "I had a real Kerfuffle at the Sharbert shop near Fornax"
+  "event": "user.upgraded",
+  "data": {
+    "user_id": "716d7e02-8044-44fe-8cbc-ab8542f3a1b6"
+  }
+}
+
+### Test Polka Webhook (Invalid Event - Should return 204 but do nothing)
+POST http://localhost:8080/api/polka/webhooks
+Authorization: ApiKey f27d66bca09c470a9693026827050a4d
+Content-Type: application/json
+
+{
+  "event": "user.deleted",
+  "data": {
+    "user_id": "PASTE_THE_ID_FROM_STEP_1_HERE"
+  }
 }
