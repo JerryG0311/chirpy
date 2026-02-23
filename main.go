@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"sort"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -242,6 +243,7 @@ func (cfg *apiConfig) handlerChirpsCreate(w http.ResponseWriter, r *http.Request
 
 func (cfg *apiConfig) handlerChirpsGet(w http.ResponseWriter, r *http.Request) {
 	authorIDString := r.URL.Query().Get("author_id")
+	sortDirection := r.URL.Query().Get("sort")
 
 	var dbChirps []database.Chirp
 	var err error
@@ -261,6 +263,14 @@ func (cfg *apiConfig) handlerChirpsGet(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, http.StatusInternalServerError, "Couldn't retreive chirps")
 		return
 	}
+
+	sort.Slice(dbChirps, func(i, j int) bool {
+		if sortDirection == "desc" {
+			return dbChirps[i].CreatedAt.After(dbChirps[j].CreatedAt)
+		}
+
+		return dbChirps[i].CreatedAt.Before(dbChirps[j].CreatedAt)
+	})
 
 	chirps := []Chirp{}
 	for _, dbChirp := range dbChirps {
