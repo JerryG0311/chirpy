@@ -76,3 +76,7 @@ GET http://localhost:8080/api/chirps?author_id=072d7430-1fdf-4b8c-a32e-80d47ea66
 
 ### Get Chirps for a non-existent Author (Should return an empty list [])
 GET http://localhost:8080/api/chirps?author_id=072d7430-1fdf-4b8c-a32e-80d47ea66263
+
+
+### Get Chirps - Newest First
+GET http://localhost:8080/api/chirps?sort=desc
