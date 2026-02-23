@@ -34,6 +34,14 @@ type User struct {
 	IsChirpyRed bool      `json:"is_chirpy_red"`
 }
 
+type Chirp struct {
+	ID        uuid.UUID `json:"id"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	Body      string    `json:"body"`
+	UserID    uuid.UUID `json:"user_id"`
+}
+
 func main() {
 	err := godotenv.Load()
 	if err != nil {
@@ -233,28 +241,30 @@ func (cfg *apiConfig) handlerChirpsCreate(w http.ResponseWriter, r *http.Request
 }
 
 func (cfg *apiConfig) handlerChirpsGet(w http.ResponseWriter, r *http.Request) {
-	dbChirps, err := cfg.db.GetChirps(r.Context())
-	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, "Couldn't retrieve chirps")
-		return
+	authorIDString := r.URL.Query().Get("author_id")
+
+	var dbChirps []database.Chirp
+	var err error
+
+	if authorIDString != "" {
+		authorID, parseErr := uuid.Parse(authorIDString)
+		if parseErr != nil {
+			respondWithError(w, http.StatusBadRequest, "Invalid author ID")
+			return
+		}
+		dbChirps, err = cfg.db.GetChirpsForAuthor(r.Context(), authorID)
+	} else {
+		dbChirps, err = cfg.db.GetChirps(r.Context())
 	}
-	type Chirp struct {
-		ID        uuid.UUID `json:"id"`
-		CreatedAt time.Time `json:"created_at"`
-		UpdatedAt time.Time `json:"updated_at"`
-		Body      string    `json:"body"`
-		UserID    uuid.UUID `json:"user_id"`
+
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Couldn't retreive chirps")
+		return
 	}
 
 	chirps := []Chirp{}
-	for _, dbdbChirp := range dbChirps {
-		chirps = append(chirps, Chirp{
-			ID:        dbdbChirp.ID,
-			CreatedAt: dbdbChirp.CreatedAt,
-			UpdatedAt: dbdbChirp.UpdatedAt,
-			Body:      dbdbChirp.Body,
-			UserID:    dbdbChirp.UserID,
-		})
+	for _, dbChirp := range dbChirps {
+		chirps = append(chirps, mapChirp(dbChirp))
 	}
 	respondWithJson(w, http.StatusOK, chirps)
 }
@@ -564,4 +574,14 @@ func middlewareCors(next http.Handler) http.Handler {
 		}
 		next.ServeHTTP(w, r)
 	})
+}
+
+func mapChirp(dbChirp database.Chirp) Chirp {
+	return Chirp{
+		ID:        dbChirp.ID,
+		CreatedAt: dbChirp.CreatedAt,
+		UpdatedAt: dbChirp.UpdatedAt,
+		Body:      dbChirp.Body,
+		UserID:    dbChirp.UserID,
+	}
 }

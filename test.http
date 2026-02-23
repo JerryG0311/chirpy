@@ -25,7 +25,22 @@ Content-Type: application/json
   "password": "password123"
 }
 
-### 3. TEST POLKA WEBHOOK (Upgrade User)
+
+### 3. Create a Chirp
+# Paste the token you copied into the Authorization header below
+POST http://localhost:8080/api/chirps
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjaGlycHkiLCJzdWIiOiJkNjM0Y2ZiMS1kZjllLTRhMDMtYTRkNS1jNzJhODdiY2ZmMWYiLCJleHAiOjE3NzE4MDY3MzcsImlhdCI6MTc3MTgwMzEzN30.-OyJlNQaZvqZruV33wwbeYWVS63hqO2uJxorZmH6WR8
+
+{
+  "body": "I am the one who chirps!"
+}
+
+### 5. Test the Author Filter
+# Use the "id" of the user you created in Step 1
+GET http://localhost:8080/api/chirps?author_id=d634cfb1-df9e-4a03-a4d5-c72a87bcff1f
+
+### . TEST POLKA WEBHOOK (Upgrade User)
 # NOTE: Added 'ApiKey ' prefix and a fake UUID. 
 # REPLACE the UUID below with the "id" you got from the Create User test above!
 POST http://localhost:8080/api/polka/webhooks
@@ -50,3 +65,14 @@ Content-Type: application/json
     "user_id": "PASTE_THE_ID_FROM_STEP_1_HERE"
   }
 }
+
+
+### Get ALL Chirps (Should work like before)
+GET http://localhost:8080/api/chirps
+
+### Get Chirps for a specific Author (Filtered)
+# Replace the UUID below with a real User ID from your database
+GET http://localhost:8080/api/chirps?author_id=072d7430-1fdf-4b8c-a32e-80d47ea66263
+
+### Get Chirps for a non-existent Author (Should return an empty list [])
+GET http://localhost:8080/api/chirps?author_id=072d7430-1fdf-4b8c-a32e-80d47ea66263
